@@ -1,6 +1,6 @@
 #ifndef MSERVO_H
 #define MSERVO_H
-a
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
@@ -43,21 +43,21 @@ class Servo
     int angleToPulse(int a);
 
   public:
-    enum PIN {//used to convert arduino digital pins to avr just for convenience
-      avrPD0 = 0,
-      avrPD1 = 1,
-      avrPD2 = 2,
-      avrPD3 = 3,
-      avrPD4 = 4,
-      avrPD5 = 5,
-      avrPD6 = 6,
-      avrPD7 = 7,
-      avrPB0 = 8,
-      avrPB1 = 9,
-      avrPB2 = 10,
-      avrPB3 = 11,
-      avrPB4 = 12,
-      avrPB5 = 13
+    enum atmega328p {//used to convert arduino digital pins to avr just for convenience
+      _PD0 = 0,
+      _PD1 = 1,
+      _PD2 = 2,
+      _PD3 = 3,
+      _PD4 = 4,
+      _PD5 = 5,
+      _PD6 = 6,
+      _PD7 = 7,
+      _PB0 = 8,
+      _PB1 = 9,
+      _PB2 = 10,
+      _PB3 = 11,
+      _PB4 = 12,
+      _PB5 = 13
     };
 
     Servo();

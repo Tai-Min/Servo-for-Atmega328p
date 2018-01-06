@@ -35,84 +35,98 @@ void Servo::setPinState(int pin, bool state)
 {
   switch (pin)
   {
-  case avrPD2:
+  case _PD0:
+    DDRD |= (1 << DDD0);
+    if (state)
+      PORTD |= (1 << PD0);
+    else
+      PORTD &= ~(1 << PD0);
+    break;
+  case _PD1:
+    DDRD |= (1 << DDD1);
+    if (state)
+      PORTD |= (1 << PD1);
+    else
+      PORTD &= ~(1 << PD1);
+    break;
+  case _PD2:
     DDRD |= (1 << DDD2);
     if (state)
       PORTD |= (1 << PD2);
     else
       PORTD &= ~(1 << PD2);
     break;
-  case avrPD3:
+  case _PD3:
     DDRD |= (1 << DDD3);
     if (state)
       PORTD |= (1 << PD3);
     else
       PORTD &= ~(1 << PD3);
     break;
-  case avrPD4:
+  case _PD4:
     DDRD |= (1 << DDD4);
     if (state)
       PORTD |= (1 << PD4);
     else
       PORTD &= ~(1 << PD4);
     break;
-  case avrPD5:
+  case _PD5:
     DDRD |= (1 << DDD5);
     if (state)
       PORTD |= (1 << PD5);
     else
       PORTD &= ~(1 << PD5);
     break;
-  case avrPD6:
+  case _PD6:
     DDRD |= (1 << DDD6);
     if (state)
       PORTD |= (1 << PD6);
     else
       PORTD &= ~(1 << PD6);
     break;
-  case avrPD7:
+  case _PD7:
     DDRD |= (1 << DDD7);
     if (state)
       PORTD |= (1 << PD7);
     else
       PORTD &= ~(1 << PD7);
     break;
-  case avrPB0:
+  case _PB0:
     DDRB |= (1 << DDB0);
     if (state)
       PORTB |= (1 << PB0);
     else
       PORTB &= ~(1 << PB0);
     break;
-  case avrPB1:
+  case _PB1:
     DDRB |= (1 << DDB1);
     if (state)
       PORTB |= (1 << PB1);
     else
       PORTB &= ~(1 << PB1);
     break;
-  case avrPB2:
+  case _PB2:
     DDRB |= (1 << DDB2);
     if (state)
       PORTB |= (1 << PB2);
     else
       PORTB &= ~(1 << PB2);
     break;
-  case avrPB3:
+  case _PB3:
     DDRB |= (1 << DDB3);
     if (state)
       PORTB |= (1 << PB3);
     else
       PORTB &= ~(1 << PB3);
     break;
-  case avrPB4:
+  case _PB4:
     DDRB |= (1 << DDB4);
     if (state)
       PORTB |= (1 << PB4);
     else
       PORTB &= ~(1 << PB4);
     break;
-  case avrPB5:
+  case _PB5:
     DDRB |= (1 << DDB5);
     if (state)
       PORTB |= (1 << PB5);
@@ -157,7 +171,7 @@ void Servo::ISRpulse()
     return;
   }
 
-  if(servos[currentServo] == nullptr)
+  if (servos[currentServo] == nullptr)
   {
     currentServo++;
     OCR1B = TCNT1 + pulseToCounts(200);
@@ -197,28 +211,27 @@ ISR(TIMER1_COMPB_vect)
 //setters
 bool Servo::activate(int p)
 {
-  if (servoNumber >= 6 || p > 13 || p < 2)//check if selected pin is not in available pins and if yes then do not activate servo
+  if (servoNumber >= 6 || p > 13 || p < 2) //check if selected pin is not in available pins and if yes then do not activate servo
   {
     return 0;
   }
-  for (int i = 0; i < servoNumber; i++)//check if other servo uses selected pin and if yes then do not activate servo
+  for (int i = 0; i < servoNumber; i++) //check if other servo uses selected pin and if yes then do not activate servo
   {
     if (p == servos[i]->pin)
       return 0;
   }
-  for(int i = 0; i < 6; i++)//check if slot is empty and if so set index to it's position in array
+  for (int i = 0; i < 6; i++) //check if slot is empty and if so set index to it's position in array
   {
-    if(servos[i] == nullptr)
+    if (servos[i] == nullptr)
     {
       index = i;
       break;
     }
-      
   }
   pin = p;
   //index = servoNumber;
   servoNumber++;
-  servos[index] = this;//add servo to array of active servos
+  servos[index] = this; //add servo to array of active servos
   return 1;
 }
 
@@ -229,7 +242,7 @@ void Servo::deactivate()
     servos[i] = servos[i + 1];
   }*/
   //servos[servoNumber - 1] = nullptr;
-  servo[index] = nullptr;
+  servos[index] = nullptr;
   pin = -1;
   index = -1;
   servoNumber--;
@@ -246,7 +259,7 @@ void Servo::setMinAngle(int a)
 {
   if (a > maxAngle)
     a = maxAngle;
-  else if(a < 0)
+  else if (a < 0)
     a = 0;
   minAngle = a;
   computeLinearConstants();
@@ -298,7 +311,7 @@ void Servo::setUsableMinAngle(int a)
     a = minAngle;
   usableMinAngle = a;
   usableMinPulse = angleToPulse(a);
-  setAngle(getAngle());//refresh current angle in case it is out of usable min-max angle boundaries
+  setAngle(getAngle()); //refresh current angle in case it is out of usable min-max angle boundaries
 }
 
 void Servo::setUsableMaxAngle(int a)
@@ -309,7 +322,7 @@ void Servo::setUsableMaxAngle(int a)
     a = maxAngle;
   usableMaxAngle = a;
   usableMaxPulse = angleToPulse(a);
-  setAngle(getAngle());//refresh current angle in case it is out of usable min-max angle boundaries
+  setAngle(getAngle()); //refresh current angle in case it is out of usable min-max angle boundaries
 }
 
 void Servo::setUsableMinPulse(int p)
@@ -320,7 +333,7 @@ void Servo::setUsableMinPulse(int p)
     p = minPulse;
   usableMinPulse = p;
   usableMinAngle = pulseToAngle(p);
-  setPulse(getPulse());//refresh current pulse in case it is out of usable min-max pulse boundaries
+  setPulse(getPulse()); //refresh current pulse in case it is out of usable min-max pulse boundaries
 }
 
 void Servo::setUsableMaxPulse(int p)
@@ -331,7 +344,7 @@ void Servo::setUsableMaxPulse(int p)
     p = maxPulse;
   usableMaxPulse = p;
   usableMaxAngle = pulseToAngle(p);
-  setPulse(getPulse());//refresh current pulse in case it is out of usable min-max pulse boundaries
+  setPulse(getPulse()); //refresh current pulse in case it is out of usable min-max pulse boundaries
 }
 
 void Servo::setAngle(int a)
