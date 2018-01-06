@@ -1,4 +1,5 @@
 #include "servo.h"
+
 //private
 const int Servo::prescaler = 8;
 Servo *Servo::servos[6] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
@@ -149,10 +150,17 @@ void Servo::ISRpulse()
 {
   static bool flag = 0;
 
-  if (currentServo >= servoNumber)
+  if (currentServo >= 6)
   {
     OCR1B = 0;
     flag = 0;
+    return;
+  }
+
+  if(servos[currentServo] == nullptr)
+  {
+    currentServo++;
+    OCR1B = TCNT1 + pulseToCounts(200);
     return;
   }
 
@@ -167,7 +175,7 @@ void Servo::ISRpulse()
   {
     setPinState(servos[currentServo]->pin, 0);
     currentServo++;
-    OCR1B = TCNT1 + pulseToCounts(100);
+    OCR1B = TCNT1 + pulseToCounts(200);
   }
 }
 
@@ -198,8 +206,17 @@ bool Servo::activate(int p)
     if (p == servos[i]->pin)
       return 0;
   }
+  for(int i = 0; i < 6; i++)//check if slot is empty and if so set index to it's position in array
+  {
+    if(servos[i] == nullptr)
+    {
+      index = i;
+      break;
+    }
+      
+  }
   pin = p;
-  index = servoNumber;
+  //index = servoNumber;
   servoNumber++;
   servos[index] = this;//add servo to array of active servos
   return 1;
@@ -207,11 +224,12 @@ bool Servo::activate(int p)
 
 void Servo::deactivate()
 {
-  for (int i = index; i < servoNumber - 1; i++)//remove servo from array of active servos
+  /*for (int i = index; i < servoNumber - 1; i++)//remove servo from array of active servos
   {
     servos[i] = servos[i + 1];
-  }
-  servos[servoNumber - 1] = nullptr;
+  }*/
+  //servos[servoNumber - 1] = nullptr;
+  servo[index] = nullptr;
   pin = -1;
   index = -1;
   servoNumber--;
