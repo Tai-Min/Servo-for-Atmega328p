@@ -17,8 +17,8 @@ class Servo
 
     int minAngle = 0;
     int maxAngle = 180;
-    int minPulse = 600;//in us
-    int maxPulse = 2600;//in us
+    int minPulse = 600;//in microseconds
+    int maxPulse = 2600;//in microseconds
 
     int usableMinAngle = minAngle;//user can limit movement of the servo without modifying 
     int usableMaxAngle = maxAngle;//possible angle and pulse of the actual servo
