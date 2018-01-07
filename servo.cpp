@@ -198,14 +198,14 @@ void Servo::ISRreset()
   currentServo = 0;
 }
 
-ISR(TIMER1_COMPA_vect)
-{
-  Servo::ISRreset();
-}
-
 ISR(TIMER1_COMPB_vect)
 {
   Servo::ISRpulse();
+}
+
+ISR(TIMER1_COMPA_vect)
+{
+  Servo::ISRreset();
 }
 
 //setters
