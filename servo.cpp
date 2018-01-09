@@ -28,7 +28,7 @@ void Servo::init()
   //OCR1A = pulseToCounts(20000);            //20ms / 50Hz
   //TCCR1B |= (1 << WGM12);                  //CTC on OCR1A
   //~33ms / ~30.5Hz
-  TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B) | (1 << TOIE0); //interrupt on compare w/ OCR1A and OCR1B and
+  TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B) | (1 << TOIE0); //interrupt on compare w/ OCR1A and OCR1B and overflow
   TCCR1B |= (1 << CS11);                                  // F_CPU/8 prescaler
   sei();
 }
@@ -234,14 +234,19 @@ void Servo::ISRreset()
   currentServoA = 0;
 }
 
+ISR(TIMER1_COMPA_vect)
+{
+  Servo::ISRpulseA();
+}
+
 ISR(TIMER1_COMPB_vect)
 {
   Servo::ISRpulseB();
 }
 
-ISR(TIMER1_COMPA_vect)
+ISR(TIMER1_OVF_vect)
 {
-  Servo::ISRpulseA();
+  Servo::ISRreset();
 }
 
 //setters
