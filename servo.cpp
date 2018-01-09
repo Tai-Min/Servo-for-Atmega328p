@@ -2,9 +2,10 @@
 
 //private
 const int Servo::prescaler = 8;
-Servo *Servo::servos[6] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+Servo *Servo::servos[12] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 int Servo::servoNumber = 0;
-volatile int Servo::currentServo = 0;
+volatile int Servo::currentServoA = 0;
+volatile int Servo::currentServoB = 0;
 
 void Servo::computeLinearConstants()
 {
@@ -14,7 +15,7 @@ void Servo::computeLinearConstants()
 
 unsigned int Servo::pulseToCounts(int p)
 {
-  return (double)F_CPU / (double)prescaler * (double)p / (double)1000000 /*- (double)1*/;
+  return (double)F_CPU / (double)prescaler * (double)p / (double)1000000;
 }
 
 void Servo::init()
@@ -24,10 +25,11 @@ void Servo::init()
   TCCR1B = 0;
   TIMSK1 = 0;
 
-  OCR1A = pulseToCounts(20000);            //20ms / 50Hz
-  TCCR1B |= (1 << WGM12);                  //CTC on OCR1A
-  TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B); //interrupt on compare w/ OCR1A and OCR1B
-  TCCR1B |= (1 << CS11);                   // F_CPU/8 prescaler
+  //OCR1A = pulseToCounts(20000);            //20ms / 50Hz
+  //TCCR1B |= (1 << WGM12);                  //CTC on OCR1A
+  //~33ms / ~30.5Hz
+  TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B) | (1 << TOIE0); //interrupt on compare w/ OCR1A and OCR1B and
+  TCCR1B |= (1 << CS11);                                  // F_CPU/8 prescaler
   sei();
 }
 
@@ -160,20 +162,53 @@ Servo::~Servo()
   deactivate();
 }
 
-void Servo::ISRpulse()
+void Servo::ISRpulseA()
 {
   static bool flag = 0;
 
-  if (currentServo >= 6)
+  if (currentServoA >= 6)
+  {
+    OCR1A = 0;
+    flag = 0;
+    return;
+  }
+
+  if (servos[currentServoA] == nullptr)
+  {
+    currentServoA++;
+    OCR1A = TCNT1 + pulseToCounts(200);
+    return;
+  }
+
+  flag = !flag;
+
+  if (flag)
+  {
+    setPinState(servos[currentServoA]->pin, 1);
+    OCR1A = TCNT1 + servos[currentServoA]->counts;
+  }
+  else
+  {
+    setPinState(servos[currentServoA]->pin, 0);
+    currentServoA++;
+    OCR1A = TCNT1 + pulseToCounts(200);
+  }
+}
+
+void Servo::ISRpulseB()
+{
+  static bool flag = 0;
+
+  if (currentServoB >= 6)
   {
     OCR1B = 0;
     flag = 0;
     return;
   }
 
-  if (servos[currentServo] == nullptr)
+  if (servos[currentServoB + 6] == nullptr)
   {
-    currentServo++;
+    currentServoB++;
     OCR1B = TCNT1 + pulseToCounts(200);
     return;
   }
@@ -182,36 +217,37 @@ void Servo::ISRpulse()
 
   if (flag)
   {
-    setPinState(servos[currentServo]->pin, 1);
-    OCR1B = TCNT1 + servos[currentServo]->counts;
+    setPinState(servos[currentServoB + 6]->pin, 1);
+    OCR1B = TCNT1 + servos[currentServoB + 6]->counts;
   }
   else
   {
-    setPinState(servos[currentServo]->pin, 0);
-    currentServo++;
+    setPinState(servos[currentServoB + 6]->pin, 0);
+    currentServoB++;
     OCR1B = TCNT1 + pulseToCounts(200);
   }
 }
 
 void Servo::ISRreset()
 {
-  currentServo = 0;
+  currentServoB = 0;
+  currentServoA = 0;
 }
 
 ISR(TIMER1_COMPB_vect)
 {
-  Servo::ISRpulse();
+  Servo::ISRpulseB();
 }
 
 ISR(TIMER1_COMPA_vect)
 {
-  Servo::ISRreset();
+  Servo::ISRpulseA();
 }
 
 //setters
 bool Servo::activate(int p)
 {
-  if (servoNumber >= 6 || p > 13 || p < 2) //check if selected pin is not in available pins and if yes then do not activate servo
+  if (servoNumber >= 12 || p > 13 || p < 0) //check if selected pin is not in available pins and if yes then do not activate servo
   {
     return 0;
   }
@@ -220,29 +256,23 @@ bool Servo::activate(int p)
     if (p == servos[i]->pin)
       return 0;
   }
-  for (int i = 0; i < 6; i++) //check if slot is empty and if so set index to it's position in array
-  {
-    if (servos[i] == nullptr)
-    {
-      index = i;
-      break;
-    }
-  }
   pin = p;
-  //index = servoNumber;
+  index = servoNumber;
+  servos[index] = this; //add servo to the end of array of active servos
   servoNumber++;
-  servos[index] = this; //add servo to array of active servos
   return 1;
 }
 
 void Servo::deactivate()
 {
-  /*for (int i = index; i < servoNumber - 1; i++)//remove servo from array of active servos
-  {
+  if (!isActive())
+    return;
+
+  for (int i = index; i < servoNumber - 1; i++)//decrease index of every servo by 1 starting from selected servo+1 to the last not nullpointer element
+  {                                            //the index+1 element will override selected servo and remove it from the array
     servos[i] = servos[i + 1];
-  }*/
-  //servos[servoNumber - 1] = nullptr;
-  servos[index] = nullptr;
+  }
+  servos[servoNumber - 1] = nullptr;
   pin = -1;
   index = -1;
   servoNumber--;
