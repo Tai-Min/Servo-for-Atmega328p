@@ -9,7 +9,7 @@ class Servo
 private:
   static const int prescaler;
   static int servoNumber;           //total number of active servos
-  static Servo *servos[12];          //array of pointers to every available servo - max 6 servos can be active at time
+  static Servo *servos[12];          //array of pointers to every available servo - max 12 servos can be active at time
   volatile static int currentServoA; //current servo in query to send pulse in ISR
   volatile static int currentServoB;
 
