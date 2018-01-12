@@ -78,10 +78,7 @@ public:
   void setMaxPulse(int p);
   void setUsableMinAngle(int a);
   void setUsableMaxAngle(int a);
-  void setUsableMinPulse(int p);
-  void setUsableMaxPulse(int p);
   void setAngle(int a);
-  void setPulse(int p);
 
   static int getServoNumber();
   int getPin();
@@ -91,10 +88,7 @@ public:
   int getMaxPulse();
   int getUsableMinAngle();
   int getUsableMaxAngle();
-  int getUsableMinPulse();
-  int getUsableMaxPulse();
   int getAngle();
-  int getPulse();
 };
 
 #endif
