@@ -25,9 +25,6 @@ void Servo::init()
   TCCR1B = 0;
   TIMSK1 = 0;
 
-  //OCR1A = pulseToCounts(20000);            //20ms / 50Hz
-  //TCCR1B |= (1 << WGM12);                  //CTC on OCR1A
-  //~33ms / ~30.5Hz
   TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B) | (1 << TOIE0); //interrupt on compare w/ OCR1A and OCR1B and overflow
   TCCR1B |= (1 << CS11);                                  // F_CPU/8 prescaler
   sei();
@@ -273,8 +270,8 @@ void Servo::deactivate()
   if (!isActive())
     return;
 
-  for (int i = index; i < servoNumber - 1; i++)//decrease index of every servo by 1 starting from selected servo+1 to the last not nullpointer element
-  {                                            //the index+1 element will override selected servo and remove it from the array
+  for (int i = index; i < servoNumber - 1; i++) //decrease index of every servo by 1 starting from selected servo+1 to the last not nullpointer element
+  {                                             //the index+1 element will override selected servo and remove it from the array
     servos[i] = servos[i + 1];
   }
   servos[servoNumber - 1] = nullptr;
@@ -292,79 +289,75 @@ bool Servo::isActive()
 
 void Servo::setMinAngle(int a)
 {
-    if (a >= maxAngle)
-        a = maxAngle - 1;
-    else if (a < 0)
-        a = 0;
-    minAngle = a;
-    computeLinearConstants();
-    setUsableMinAngle(getUsableMinAngle()); //refresh usable angles just in case they are out of min-max angle boundaries
-    setUsableMaxAngle(getUsableMaxAngle());
+  if (a >= maxAngle)
+    a = maxAngle - 1;
+  else if (a < 0)
+    a = 0;
+  minAngle = a;
+  computeLinearConstants();
+  setUsableMinAngle(getUsableMinAngle()); //refresh usable angles just in case they are out of min-max angle boundaries
+  setUsableMaxAngle(getUsableMaxAngle());
 }
 
 void Servo::setMaxAngle(int a)
 {
-    if (a <= minAngle)
-        a = minAngle + 1;
-    maxAngle = a;
-    computeLinearConstants();
-    setUsableMaxAngle(getUsableMaxAngle()); //refresh usable angles just in case they are out of min-max angle boundaries
-    setUsableMinAngle(getUsableMinAngle());
+  if (a <= minAngle)
+    a = minAngle + 1;
+  maxAngle = a;
+  computeLinearConstants();
+  setUsableMaxAngle(getUsableMaxAngle()); //refresh usable angles just in case they are out of min-max angle boundaries
+  setUsableMinAngle(getUsableMinAngle());
 }
 
 void Servo::setMinPulse(int p)
 {
-    if (p > maxPulse)
-        p = maxPulse - 1;
-    else if (p < 0)
-        p = 0;
-    minPulse = p;
-    computeLinearConstants();
-    setUsableMinAngle(getUsableMinAngle());
-    setUsableMaxAngle(getUsableMaxAngle());
+  if (p > maxPulse)
+    p = maxPulse - 1;
+  else if (p < 0)
+    p = 0;
+  minPulse = p;
+  computeLinearConstants();
 }
 
 void Servo::setMaxPulse(int p)
 {
-    if (p < minPulse)
-        p = minPulse + 1;
-    maxPulse = p;
-    computeLinearConstants();
-    setUsableMaxAngle(getUsableMaxAngle());
-    setUsableMinAngle(getUsableMinAngle());
+  if (p < minPulse)
+    p = minPulse + 1;
+  maxPulse = p;
+  computeLinearConstants();
 }
 
 void Servo::setUsableMinAngle(int a)
 {
-    if (a > usableMaxAngle)
-        a = usableMaxAngle;
-    else if (a < minAngle)
-        a = minAngle;
-    usableMinAngle = a;
-    setAngle(getAngle()); //refresh current angle in case it is out of usable min-max angle boundaries
+  if (a > usableMaxAngle)
+    a = usableMaxAngle;
+  else if (a < minAngle)
+    a = minAngle;
+  usableMinAngle = a;
+  setAngle(getAngle()); //refresh current angle in case it is out of usable min-max angle boundaries
 }
 
 void Servo::setUsableMaxAngle(int a)
 {
-    if (a < usableMinAngle)
-        a = usableMinAngle;
-    else if (a > maxAngle)
-        a = maxAngle;
-    usableMaxAngle = a;
-    setAngle(getAngle()); //refresh current angle in case it is out of usable min-max angle boundaries
+  if (a < usableMinAngle)
+    a = usableMinAngle;
+  else if (a > maxAngle)
+    a = maxAngle;
+  usableMaxAngle = a;
+  setAngle(getAngle()); //refresh current angle in case it is out of usable min-max angle boundaries
 }
 
 void Servo::setAngle(int a)
 {
-    if (a > usableMaxAngle)
-        a = usableMaxAngle;
-    else if (a < usableMinAngle)
-        a = usableMinAngle;
+  if (a > usableMaxAngle)
+    a = usableMaxAngle;
+  else if (a < usableMinAngle)
+    a = usableMinAngle;
 
-    angle = a;
-    pulse = angleToPulse(a);
+  angle = a;
+  pulse = angleToPulse(a);
+  counts = pulseToCounts(pulse);
 }
-
 
 //getters
 int Servo::getServoNumber() { return servoNumber; }

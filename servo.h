@@ -8,14 +8,14 @@ class Servo
 {
 private:
   static const int prescaler;
-  static int servoNumber;           //total number of active servos
+  static int servoNumber;            //total number of active servos
   static Servo *servos[12];          //array of pointers to every available servo - max 12 servos can be active at time
   volatile static int currentServoA; //current servo in query to send pulse in ISR
   volatile static int currentServoB;
 
   int pin = -1;
   int index = -1;
-  
+
   int minAngle = 0;
   int maxAngle = 180;
   int minPulse = 600;  //in microseconds
@@ -65,7 +65,7 @@ public:
   Servo();
   ~Servo();
   static void ISRpulseA(); //manage pulses for servos in ISR
-  static void ISRpulseB(); 
+  static void ISRpulseB();
   static void ISRreset(); //prepare servos for next cycle
 
   bool activate(int p);
