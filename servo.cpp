@@ -330,7 +330,7 @@ void Servo::setMaxPulse(int p)
 void Servo::setUsableMinAngle(int a)
 {
   if (a > usableMaxAngle)
-    a = usableMaxAngle;
+    a = usableMaxAngle - 1;
   else if (a < minAngle)
     a = minAngle;
   usableMinAngle = a;
@@ -340,7 +340,7 @@ void Servo::setUsableMinAngle(int a)
 void Servo::setUsableMaxAngle(int a)
 {
   if (a < usableMinAngle)
-    a = usableMinAngle;
+    a = usableMinAngle + 1;
   else if (a > maxAngle)
     a = maxAngle;
   usableMaxAngle = a;
