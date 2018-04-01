@@ -36,7 +36,7 @@ private:
 
   static unsigned int pulseToCounts(int p);
 
-  static void init();
+  
   static void setPinState(int pin, bool state);
 
 protected:
@@ -61,9 +61,11 @@ public:
     _PB4 = 12,
     _PB5 = 13
   };
-
+  
   Servo();
   ~Servo();
+  static void init();
+  
   static void ISRpulseA(); //manage pulses for servos in ISR
   static void ISRpulseB();
   static void ISRreset(); //prepare servos for next cycle

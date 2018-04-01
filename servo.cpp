@@ -2,7 +2,7 @@
 
 //private
 const int Servo::prescaler = 8;
-Servo *Servo::servos[12] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+Servo *Servo::servos[12] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 int Servo::servoNumber = 0;
 volatile int Servo::currentServoA = 0;
 volatile int Servo::currentServoB = 0;
@@ -25,8 +25,8 @@ void Servo::init()
   TCCR1B = 0;
   TIMSK1 = 0;
 
-  TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B) | (1 << TOIE0); //interrupt on compare w/ OCR1A and OCR1B and overflow
-  TCCR1B |= (1 << CS11);                                  // F_CPU/8 prescaler
+  TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B) /*| (1 << TOIE0)*/; //interrupt on compare w/ OCR1A and OCR1B and overflow
+  TCCR1B |= (1 << CS11);                                      // F_CPU/8 prescaler
   sei();
 }
 
@@ -149,7 +149,6 @@ int Servo::angleToPulse(int a)
 //public
 Servo::Servo()
 {
-  init();
   computeLinearConstants();
   counts = pulseToCounts(pulse);
 }
@@ -166,14 +165,13 @@ void Servo::ISRpulseA()
   if (currentServoA >= 6)
   {
     OCR1A = 0;
-    flag = 0;
+    currentServoA = 0;
     return;
   }
-
-  if (servos[currentServoA] == nullptr)
+  else if (servos[currentServoA] == nullptr)
   {
-    currentServoA++;
-    OCR1A = TCNT1 + pulseToCounts(200);
+    OCR1A = 0;
+    currentServoA = 0;
     return;
   }
 
@@ -188,7 +186,7 @@ void Servo::ISRpulseA()
   {
     setPinState(servos[currentServoA]->pin, 0);
     currentServoA++;
-    OCR1A = TCNT1 + pulseToCounts(200);
+    OCR1A = TCNT1 + pulseToCounts(500);
   }
 }
 
@@ -199,14 +197,13 @@ void Servo::ISRpulseB()
   if (currentServoB >= 6)
   {
     OCR1B = 0;
-    flag = 0;
+    currentServoB = 0;
     return;
   }
-
-  if (servos[currentServoB + 6] == nullptr)
+  else if (servos[currentServoB + 6] == nullptr)
   {
-    currentServoB++;
-    OCR1B = TCNT1 + pulseToCounts(200);
+    OCR1B = 0;
+    currentServoB = 0;
     return;
   }
 
@@ -221,7 +218,7 @@ void Servo::ISRpulseB()
   {
     setPinState(servos[currentServoB + 6]->pin, 0);
     currentServoB++;
-    OCR1B = TCNT1 + pulseToCounts(200);
+    OCR1B = TCNT1 + pulseToCounts(500);
   }
 }
 
@@ -241,14 +238,16 @@ ISR(TIMER1_COMPB_vect)
   Servo::ISRpulseB();
 }
 
-ISR(TIMER1_OVF_vect)
+/*ISR(TIMER1_OVF_vect)
 {
-  Servo::ISRreset();
-}
+//Servo::ISRreset();
+}*/
 
 //setters
 bool Servo::activate(int p)
 {
+  if (isActive())
+    return 0;
   if (servoNumber >= 12 || p > 13 || p < 0) //check if selected pin is not in available pins and if yes then do not activate servo
   {
     return 0;
