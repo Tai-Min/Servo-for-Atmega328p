@@ -65,10 +65,9 @@ public:
   Servo();
   ~Servo();
   static void init();
-  
+
   static void ISRpulseA(); //manage pulses for servos in ISR
   static void ISRpulseB();
-  static void ISRreset(); //prepare servos for next cycle
 
   bool activate(int p);
   void deactivate();

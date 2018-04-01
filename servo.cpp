@@ -18,18 +18,6 @@ unsigned int Servo::pulseToCounts(int p)
   return (double)F_CPU / (double)prescaler * (double)p / (double)1000000;
 }
 
-void Servo::init()
-{
-  cli();
-  TCCR1A = 0;
-  TCCR1B = 0;
-  TIMSK1 = 0;
-
-  TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B) /*| (1 << TOIE0)*/; //interrupt on compare w/ OCR1A and OCR1B and overflow
-  TCCR1B |= (1 << CS11);                                      // F_CPU/8 prescaler
-  sei();
-}
-
 void Servo::setPinState(int pin, bool state)
 {
   switch (pin)
@@ -158,6 +146,18 @@ Servo::~Servo()
   deactivate();
 }
 
+void Servo::init()
+{
+  cli();
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TIMSK1 = 0;
+
+  TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B) /*| (1 << TOIE0)*/; //interrupt on compare w/ OCR1A and OCR1B and overflow
+  TCCR1B |= (1 << CS11);                                      // F_CPU/8 prescaler
+  sei();
+}
+
 void Servo::ISRpulseA()
 {
   static bool flag = 0;
@@ -222,12 +222,6 @@ void Servo::ISRpulseB()
   }
 }
 
-void Servo::ISRreset()
-{
-  currentServoB = 0;
-  currentServoA = 0;
-}
-
 ISR(TIMER1_COMPA_vect)
 {
   Servo::ISRpulseA();
@@ -237,11 +231,6 @@ ISR(TIMER1_COMPB_vect)
 {
   Servo::ISRpulseB();
 }
-
-/*ISR(TIMER1_OVF_vect)
-{
-//Servo::ISRreset();
-}*/
 
 //setters
 bool Servo::activate(int p)
