@@ -73,13 +73,13 @@ public:
   void deactivate();
   bool isActive();
 
-  void setMinAngle(int a);
-  void setMaxAngle(int a);
-  void setMinPulse(int p);
-  void setMaxPulse(int p);
-  void setUsableMinAngle(int a);
-  void setUsableMaxAngle(int a);
-  void setAngle(int a);
+  bool setMinAngle(int a);
+  bool setMaxAngle(int a);
+  bool setMinPulse(int p);
+  bool setMaxPulse(int p);
+  bool setUsableMinAngle(int a);
+  bool setUsableMaxAngle(int a);
+  bool setAngle(int a);
 
   static int getServoNumber();
   int getPin();
