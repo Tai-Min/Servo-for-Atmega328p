@@ -1,15 +1,17 @@
 #include "servo.h"
 
 //private
-const int Servo::prescaler = 8;
-Servo *Servo::servos[12] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+Servo *Servo::servos[servoLimit] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 int Servo::servoNumber = 0;
 volatile int Servo::currentServoA = 0;
 volatile int Servo::currentServoB = 0;
 
 void Servo::computeLinearConstants()
 {
-  linearA = ((double)maxPulse - (double)minPulse) / ((double)maxAngle - (double)minAngle);
+  if (maxAngle == minAngle)
+    linearA = ((double)maxPulse - (double)minPulse) / 0.0000001;
+  else
+    linearA = ((double)maxPulse - (double)minPulse) / ((double)maxAngle - (double)minAngle);
   linearB = (double)minPulse - linearA * (double)minAngle;
 }
 
@@ -18,112 +20,27 @@ unsigned int Servo::pulseToCounts(int p)
   return (double)F_CPU / (double)prescaler * (double)p / (double)1000000;
 }
 
-void Servo::setPinState(int pin, bool state)
+void Servo::setPinState(int p, bool state)
 {
-  switch (pin)
+  if (p < registerSize)
   {
-  case _PD0:
-    DDRD |= (1 << DDD0);
+    DDRD |= (1 << p);
     if (state)
-      PORTD |= (1 << PD0);
+      PORTD |= (1 << p);
     else
-      PORTD &= ~(1 << PD0);
-    break;
-  case _PD1:
-    DDRD |= (1 << DDD1);
+      PORTD &= ~(1 << p);
+  }
+  else
+  {
+    p -= registerSize;
+    DDRB |= (1 << p);
     if (state)
-      PORTD |= (1 << PD1);
+      PORTB |= (1 << p);
     else
-      PORTD &= ~(1 << PD1);
-    break;
-  case _PD2:
-    DDRD |= (1 << DDD2);
-    if (state)
-      PORTD |= (1 << PD2);
-    else
-      PORTD &= ~(1 << PD2);
-    break;
-  case _PD3:
-    DDRD |= (1 << DDD3);
-    if (state)
-      PORTD |= (1 << PD3);
-    else
-      PORTD &= ~(1 << PD3);
-    break;
-  case _PD4:
-    DDRD |= (1 << DDD4);
-    if (state)
-      PORTD |= (1 << PD4);
-    else
-      PORTD &= ~(1 << PD4);
-    break;
-  case _PD5:
-    DDRD |= (1 << DDD5);
-    if (state)
-      PORTD |= (1 << PD5);
-    else
-      PORTD &= ~(1 << PD5);
-    break;
-  case _PD6:
-    DDRD |= (1 << DDD6);
-    if (state)
-      PORTD |= (1 << PD6);
-    else
-      PORTD &= ~(1 << PD6);
-    break;
-  case _PD7:
-    DDRD |= (1 << DDD7);
-    if (state)
-      PORTD |= (1 << PD7);
-    else
-      PORTD &= ~(1 << PD7);
-    break;
-  case _PB0:
-    DDRB |= (1 << DDB0);
-    if (state)
-      PORTB |= (1 << PB0);
-    else
-      PORTB &= ~(1 << PB0);
-    break;
-  case _PB1:
-    DDRB |= (1 << DDB1);
-    if (state)
-      PORTB |= (1 << PB1);
-    else
-      PORTB &= ~(1 << PB1);
-    break;
-  case _PB2:
-    DDRB |= (1 << DDB2);
-    if (state)
-      PORTB |= (1 << PB2);
-    else
-      PORTB &= ~(1 << PB2);
-    break;
-  case _PB3:
-    DDRB |= (1 << DDB3);
-    if (state)
-      PORTB |= (1 << PB3);
-    else
-      PORTB &= ~(1 << PB3);
-    break;
-  case _PB4:
-    DDRB |= (1 << DDB4);
-    if (state)
-      PORTB |= (1 << PB4);
-    else
-      PORTB &= ~(1 << PB4);
-    break;
-  case _PB5:
-    DDRB |= (1 << DDB5);
-    if (state)
-      PORTB |= (1 << PB5);
-    else
-      PORTB &= ~(1 << PB5);
-    break;
+      PORTB &= ~(1 << p);
   }
 }
 
-//protected
 int Servo::pulseToAngle(int p)
 {
   return ((double)p - linearB) / linearA;
@@ -153,8 +70,8 @@ void Servo::init()
   TCCR1B = 0;
   TIMSK1 = 0;
 
-  TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B) /*| (1 << TOIE0)*/; //interrupt on compare w/ OCR1A and OCR1B and overflow
-  TCCR1B |= (1 << CS11);                                      // F_CPU/8 prescaler
+  TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B); //interrupt on compare w/ OCR1A and OCR1B
+  TCCR1B |= (1 << CS11);                   // F_CPU/8 prescaler
   sei();
 }
 
@@ -162,7 +79,7 @@ void Servo::ISRpulseA()
 {
   static bool flag = 0;
 
-  if (currentServoA >= 6)
+  if (currentServoA >= servoLimitHalf)
   {
     OCR1A = 0;
     currentServoA = 0;
@@ -194,13 +111,13 @@ void Servo::ISRpulseB()
 {
   static bool flag = 0;
 
-  if (currentServoB >= 6)
+  if (currentServoB >= servoLimitHalf)
   {
     OCR1B = 0;
     currentServoB = 0;
     return;
   }
-  else if (servos[currentServoB + 6] == nullptr)
+  else if (servos[currentServoB + servoLimitHalf] == nullptr)
   {
     OCR1B = 0;
     currentServoB = 0;
@@ -211,12 +128,12 @@ void Servo::ISRpulseB()
 
   if (flag)
   {
-    setPinState(servos[currentServoB + 6]->pin, 1);
-    OCR1B = TCNT1 + servos[currentServoB + 6]->counts;
+    setPinState(servos[currentServoB + servoLimitHalf]->pin, 1);
+    OCR1B = TCNT1 + servos[currentServoB + servoLimitHalf]->counts;
   }
   else
   {
-    setPinState(servos[currentServoB + 6]->pin, 0);
+    setPinState(servos[currentServoB + servoLimitHalf]->pin, 0);
     currentServoB++;
     OCR1B = TCNT1 + pulseToCounts(500);
   }
@@ -233,9 +150,9 @@ ISR(TIMER1_COMPB_vect)
 }
 
 //setters
-bool Servo::activate(int p)
+bool Servo::activate(int p, int a)
 {
-  if (isActive() || servoNumber >= 12 || p > 13 || p < 0) //check if selected pin is not in available pins and if yes then do not activate servo
+  if (isActive() || servoNumber >= servoLimit || p > maxPin || p < minPin) //check if selected pin is not in available pins and if yes then do not activate servo
   {
     return 0;
   }
@@ -244,11 +161,19 @@ bool Servo::activate(int p)
     if (p == servos[i]->pin)
       return 0;
   }
+  setAngle(a);
   pin = p;
   index = servoNumber;
   servos[index] = this; //add servo to the end of array of active servos
   servoNumber++;
   return 1;
+}
+
+bool Servo::isActive()
+{
+  if (pin != -1)
+    return 1;
+  return 0;
 }
 
 void Servo::deactivate()
@@ -266,79 +191,48 @@ void Servo::deactivate()
   servoNumber--;
 }
 
-bool Servo::isActive()
+void Servo::setMinAngle(int a)
 {
-  if (pin != -1)
-    return 1;
-  return 0;
-}
-
-bool Servo::setMinAngle(int a)
-{
-  if (a >= maxAngle || a > usableMinAngle)
-    return 0;
   minAngle = a;
   computeLinearConstants();
-  return 1;
 }
 
-bool Servo::setMaxAngle(int a)
+void Servo::setMaxAngle(int a)
 {
-  if (a <= minAngle || a < usableMaxAngle)
-    return 0;
-
   maxAngle = a;
   computeLinearConstants();
-  return 1;
 }
 
-bool Servo::setMinPulse(int p)
+void Servo::setMinPulse(int p)
 {
-  if (p >= maxPulse || p < 0)
-    return 0;
-
   minPulse = p;
   computeLinearConstants();
-  return 1;
 }
 
-bool Servo::setMaxPulse(int p)
+void Servo::setMaxPulse(int p)
 {
-  if (p <= minPulse)
-    return 0;
-
   maxPulse = p;
   computeLinearConstants();
-  return 1;
 }
 
-bool Servo::setUsableMinAngle(int a)
+void Servo::setUsableMinAngle(int a)
 {
-  if (a >= usableMaxAngle || a < minAngle)
-    return 0;
-
   usableMinAngle = a;
-  return 1;
 }
 
-bool Servo::setUsableMaxAngle(int a)
+void Servo::setUsableMaxAngle(int a)
 {
-  if (a <= usableMinAngle || a > maxAngle)
-    return 0;
-
   usableMaxAngle = a;
-  return 1;
 }
 
-bool Servo::setAngle(int a)
+void Servo::setAngle(int a)
 {
-  if (a > usableMaxAngle || a < usableMinAngle)
-    return 0;
+  if (a > maxAngle || a < minAngle || a > usableMaxAngle || a < usableMinAngle)
+    return;
 
   angle = a;
   pulse = angleToPulse(angle);
   counts = pulseToCounts(pulse);
-  return 1;
 }
 
 //getters
@@ -359,3 +253,5 @@ int Servo::getUsableMinAngle() { return usableMinAngle; }
 int Servo::getUsableMaxAngle() { return usableMaxAngle; }
 
 int Servo::getAngle() { return angle; }
+
+int Servo::getPulse() { return pulse; }

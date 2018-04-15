@@ -7,9 +7,9 @@
 class Servo
 {
 private:
-  static const int prescaler;
+  enum {servoLimit = 12, servoLimitHalf = 6, minPin = 0, maxPin = 13, registerSize = 8, prescaler = 8};
   static int servoNumber;            //total number of active servos
-  static Servo *servos[12];          //array of pointers to every available servo - max 12 servos can be active at time
+  static Servo *servos[servoLimit];          //array of pointers to every available servo - max 12 servos can be active at time
   volatile static int currentServoA; //current servo in query to send pulse in ISR
   volatile static int currentServoB;
 
@@ -35,31 +35,28 @@ private:
   void computeLinearConstants();
 
   static unsigned int pulseToCounts(int p);
+  static void setPinState(int p, bool state);
 
-  
-  static void setPinState(int pin, bool state);
-
-protected:
   int pulseToAngle(int p);
   int angleToPulse(int a);
-
+  
 public:
   enum atmega328p
   { //used to convert arduino digital pins to avr just for convenience
-    _PD0 = 0,
-    _PD1 = 1,
-    _PD2 = 2,
-    _PD3 = 3,
-    _PD4 = 4,
-    _PD5 = 5,
-    _PD6 = 6,
-    _PD7 = 7,
-    _PB0 = 8,
-    _PB1 = 9,
-    _PB2 = 10,
-    _PB3 = 11,
-    _PB4 = 12,
-    _PB5 = 13
+    _PD0_ = 0,
+    _PD1_ = 1,
+    _PD2_ = 2,
+    _PD3_ = 3,
+    _PD4_ = 4,
+    _PD5_ = 5,
+    _PD6_ = 6,
+    _PD7_ = 7,
+    _PB0_ = 8,
+    _PB1_ = 9,
+    _PB2_ = 10,
+    _PB3_ = 11,
+    _PB4_ = 12,
+    _PB5_ = 13
   };
   
   Servo();
@@ -69,17 +66,17 @@ public:
   static void ISRpulseA(); //manage pulses for servos in ISR
   static void ISRpulseB();
 
-  bool activate(int p);
-  void deactivate();
+  bool activate(int p, int a);
   bool isActive();
+  void deactivate();
 
-  bool setMinAngle(int a);
-  bool setMaxAngle(int a);
-  bool setMinPulse(int p);
-  bool setMaxPulse(int p);
-  bool setUsableMinAngle(int a);
-  bool setUsableMaxAngle(int a);
-  bool setAngle(int a);
+  void setMinAngle(int a);
+  void setMaxAngle(int a);
+  void setMinPulse(int p);
+  void setMaxPulse(int p);
+  void setUsableMinAngle(int a);
+  void setUsableMaxAngle(int a);
+  void setAngle(int a);
 
   static int getServoNumber();
   int getPin();
@@ -90,6 +87,7 @@ public:
   int getUsableMinAngle();
   int getUsableMaxAngle();
   int getAngle();
+  int getPulse();
 };
 
 #endif
