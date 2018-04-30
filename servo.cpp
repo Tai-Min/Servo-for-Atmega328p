@@ -2,9 +2,9 @@
 
 //private
 Servo *Servo::servos[servoLimit] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-int Servo::servoNumber = 0;
-volatile int Servo::currentServoA = 0;
-volatile int Servo::currentServoB = 0;
+uint8_t Servo::servoNumber = 0;
+volatile uint8_t Servo::currentServoA = 0;
+volatile uint8_t Servo::currentServoB = 0;
 
 void Servo::computeLinearConstants()
 {
@@ -15,12 +15,12 @@ void Servo::computeLinearConstants()
   linearB = (double)minPulse - linearA * (double)minAngle;
 }
 
-unsigned int Servo::pulseToCounts(int p)
+uint16_t Servo::pulseToCounts(uint16_t p)
 {
   return (double)F_CPU / (double)prescaler * (double)p / (double)1000000;
 }
 
-void Servo::setPinState(int p, bool state)
+void Servo::setPinState(int8_t p, bool state)
 {
   if (p < registerSize)
   {
@@ -41,12 +41,12 @@ void Servo::setPinState(int p, bool state)
   }
 }
 
-int Servo::pulseToAngle(int p)
+int16_t Servo::pulseToAngle(uint16_t p)
 {
   return ((double)p - linearB) / linearA;
 }
 
-int Servo::angleToPulse(int a)
+uint16_t Servo::angleToPulse(int16_t a)
 {
   return (double)a * linearA + linearB;
 }
@@ -150,7 +150,7 @@ ISR(TIMER1_COMPB_vect)
 }
 
 //setters
-bool Servo::activate(int p, int a)
+bool Servo::activate(int8_t p, int16_t a)
 {
   if (isActive() || servoNumber >= servoLimit || p > maxPin || p < minPin) //check if selected pin is not in available pins and if yes then do not activate servo
   {
@@ -191,41 +191,41 @@ void Servo::deactivate()
   servoNumber--;
 }
 
-void Servo::setMinAngle(int a)
+void Servo::setMinAngle(int16_t a)
 {
   minAngle = a;
   computeLinearConstants();
 }
 
-void Servo::setMaxAngle(int a)
+void Servo::setMaxAngle(int16_t a)
 {
   maxAngle = a;
   computeLinearConstants();
 }
 
-void Servo::setMinPulse(int p)
+void Servo::setMinPulse(uint16_t p)
 {
   minPulse = p;
   computeLinearConstants();
 }
 
-void Servo::setMaxPulse(int p)
+void Servo::setMaxPulse(uint16_t p)
 {
   maxPulse = p;
   computeLinearConstants();
 }
 
-void Servo::setUsableMinAngle(int a)
+void Servo::setUsableMinAngle(int16_t a)
 {
   usableMinAngle = a;
 }
 
-void Servo::setUsableMaxAngle(int a)
+void Servo::setUsableMaxAngle(int16_t a)
 {
   usableMaxAngle = a;
 }
 
-void Servo::setAngle(int a)
+void Servo::setAngle(int16_t a)
 {
   if (a > maxAngle || a < minAngle || a > usableMaxAngle || a < usableMinAngle)
     return;
@@ -236,22 +236,22 @@ void Servo::setAngle(int a)
 }
 
 //getters
-int Servo::getServoNumber() { return servoNumber; }
+uint8_t Servo::getServoNumber() { return servoNumber; }
 
-int Servo::getPin() { return pin; }
+int8_t Servo::getPin() { return pin; }
 
-int Servo::getMinAngle() { return minAngle; }
+int16_t Servo::getMinAngle() { return minAngle; }
 
-int Servo::getMaxAngle() { return maxAngle; }
+int16_t Servo::getMaxAngle() { return maxAngle; }
 
-int Servo::getMinPulse() { return minPulse; }
+uint16_t Servo::getMinPulse() { return minPulse; }
 
-int Servo::getMaxPulse() { return maxPulse; }
+uint16_t Servo::getMaxPulse() { return maxPulse; }
 
-int Servo::getUsableMinAngle() { return usableMinAngle; }
+int16_t Servo::getUsableMinAngle() { return usableMinAngle; }
 
-int Servo::getUsableMaxAngle() { return usableMaxAngle; }
+int16_t Servo::getUsableMaxAngle() { return usableMaxAngle; }
 
-int Servo::getAngle() { return angle; }
+int16_t Servo::getAngle() { return angle; }
 
-int Servo::getPulse() { return pulse; }
+uint16_t Servo::getPulse() { return pulse; }
