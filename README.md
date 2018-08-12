@@ -2,7 +2,7 @@
 
 Simple library to control up to 12 servos on Atmega328p microcontroller. </br> </br>
 
-This library uses timer 1 
+This library uses timer 1.
 
 ## Contents
 | Servo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -22,7 +22,7 @@ static void begin();
 static void ISRpulseA();
 static void ISRpulseB();
 ```
-ISRpulseA() is in TIMER1_COMPA_vect routine
+ISRpulseA() is in TIMER1_COMPA_vect routine<br/>
 ISRpulseB() is in TIMER1_COMPB_vect routine
 
 ***
