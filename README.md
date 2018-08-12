@@ -33,6 +33,8 @@ void activate(int8_t & port, int8_t & pin, int16_t angle);
 + **port:** i.e PORTB
 + **pin** i.e PB2
 + **angle:** Angle the servo will go to after activation
+
+Servo will not activate if there are 12 active servos or if other servo uses given port and pin combination.
 ***
 #### Check whether servo is active:
 ```cpp
