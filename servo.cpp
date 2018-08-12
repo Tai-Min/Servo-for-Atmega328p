@@ -20,25 +20,12 @@ uint16_t Servo::pulseToCounts(uint16_t p)
   return (double)F_CPU / (double)prescaler * (double)p / (double)1000000;
 }
 
-void Servo::setPinState(int8_t p, bool state)
+void Servo::setPinState(bool state)
 {
-  if (p < registerSize)
-  {
-    DDRD |= (1 << p);
-    if (state)
-      PORTD |= (1 << p);
-    else
-      PORTD &= ~(1 << p);
-  }
+  if (state)
+    *port |= 1 << *pin;
   else
-  {
-    p -= registerSize;
-    DDRB |= (1 << p);
-    if (state)
-      PORTB |= (1 << p);
-    else
-      PORTB &= ~(1 << p);
-  }
+    *port &= ~(1 << *pin);
 }
 
 int16_t Servo::pulseToAngle(uint16_t p)
@@ -63,7 +50,7 @@ Servo::~Servo()
   deactivate();
 }
 
-void Servo::init()
+void Servo::begin()
 {
   cli();
   TCCR1A = 0;
@@ -96,12 +83,12 @@ void Servo::ISRpulseA()
 
   if (flag)
   {
-    setPinState(servos[currentServoA]->pin, 1);
+    servos[currentServoA]->setPinState(1);
     OCR1A = TCNT1 + servos[currentServoA]->counts;
   }
   else
   {
-    setPinState(servos[currentServoA]->pin, 0);
+    servos[currentServoA]->setPinState(0);
     currentServoA++;
     OCR1A = TCNT1 + pulseToCounts(500);
   }
@@ -128,12 +115,12 @@ void Servo::ISRpulseB()
 
   if (flag)
   {
-    setPinState(servos[currentServoB + servoLimitHalf]->pin, 1);
+    servos[currentServoB + servoLimitHalf]->setPinState(1);
     OCR1B = TCNT1 + servos[currentServoB + servoLimitHalf]->counts;
   }
   else
   {
-    setPinState(servos[currentServoB + servoLimitHalf]->pin, 0);
+    servos[currentServoB + servoLimitHalf]->setPinState(0);
     currentServoB++;
     OCR1B = TCNT1 + pulseToCounts(500);
   }
@@ -150,28 +137,28 @@ ISR(TIMER1_COMPB_vect)
 }
 
 //setters
-bool Servo::activate(int8_t p, int16_t a)
+void Servo::activate(int8_t &_port, int8_t &_pin, int16_t a)
 {
-  if (isActive() || servoNumber >= servoLimit || p > maxPin || p < minPin) //check if selected pin is not in available pins and if yes then do not activate servo
+  if (isActive() || servoNumber >= servoLimit) //check if selected pin is not in available pins and if yes then do not activate servo
   {
-    return 0;
+    return;
   }
   for (int i = 0; i < servoNumber; i++) //check if other servo uses selected pin and if yes then do not activate servo
   {
-    if (p == servos[i]->pin)
-      return 0;
+    if (&_pin == servos[i]->pin && &_port == servos[i]->port)
+      return;
   }
   setAngle(a);
-  pin = p;
+  pin = &_pin;
+  port = &_port;
   index = servoNumber;
   servos[index] = this; //add servo to the end of array of active servos
   servoNumber++;
-  return 1;
 }
 
 bool Servo::isActive()
 {
-  if (pin != -1)
+  if (pin != nullptr)
     return 1;
   return 0;
 }
@@ -186,7 +173,8 @@ void Servo::deactivate()
     servos[i] = servos[i + 1];
   }
   servos[servoNumber - 1] = nullptr;
-  pin = -1;
+  pin = nullptr;
+  port = nullptr;
   index = -1;
   servoNumber--;
 }
@@ -235,10 +223,19 @@ void Servo::setAngle(int16_t a)
   counts = pulseToCounts(pulse);
 }
 
+void Servo::setPulse(uint16_t p)
+{
+  int16_t a = pulseToAngle(p);
+  if (a > maxAngle || a < minAngle || a > usableMaxAngle || a < usableMinAngle)
+    return;
+
+  angle = a;
+  pulse = p;
+  counts = pulseToCounts(pulse);
+}
+
 //getters
 uint8_t Servo::getServoNumber() { return servoNumber; }
-
-int8_t Servo::getPin() { return pin; }
 
 int16_t Servo::getMinAngle() { return minAngle; }
 
